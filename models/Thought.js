@@ -49,17 +49,17 @@ const thoughtSchema = new Schema(
         },
         reactions: [reactionSchema]
     },
-{
-    toJSON: {
-        virtuals: true,
-        getters: true
-    },
-    id: false
-}
+    {
+        toJSON: {
+            virtuals: true,
+            getters: true
+        },
+        id: false
+    }
 );
 
 //Create the virrtual property 'reactionCount'
-thoughtSchema.virtual('reactionCount').get(function() {
+thoughtSchema.virtual('reactionCount').get(function () {
     return this.reactions.length;
 });
 //Create and export the Thought model

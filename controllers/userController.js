@@ -1,114 +1,96 @@
 const { User, Thought } = require('../models');
 
 const userController = {
-    //Get all users
-    async getUsers(req, res) {
-        try {
-            const users = await User.find()
-            .select('-__v');
-            res.json(users);
-        } catch (err) {
-            res.status(500).json(err);
+  // Get all users
+  getUsers(req, res) {
+    User.find()
+      .select('-__v')
+      .then((users) => res.json(users))
+      .catch((err) => res.status(500).json(err));
+  },
+
+  // Get single user by ID
+  getSingleUser(req, res) {
+    User.findOne({ _id: req.params.userId })
+      .select('-__v')
+      .populate('thoughts')
+      .populate('friends')
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'No user with that ID' });
         }
-        },
+        res.json(user);
+      })
+      .catch((err) => res.status(500).json(err));
+  },
 
-        //Get a single user by ID
-        async getSingleUser(req, res) {
-            try {
-                const user = await User.findOne({ _id: req.params.userId })
-                .select('-__v')
-                .populate('thoughts')
-                .populate('friends');
+  // Create a user
+  createUser(req, res) {
+    User.create(req.body)
+      .then((user) => res.json(user))
+      .catch((err) => res.status(500).json(err));
+  },
 
-                if (!user) {
-                    return res.status(404).json({ message: 'No user with that ID' });
-                }
-                res.json(user);
-            } catch (err) {
-                res.status(500).json(err);
-            }
-            }
-        };
+  // Update a user
+  updateUser(req, res) {
+    User.findOneAndUpdate(
+      { _id: req.params.userId },
+      { $set: req.body },
+      { runValidators: true, new: true }
+    )
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'No user with this id!' });
+        }
+        res.json(user);
+      })
+      .catch((err) => res.status(500).json(err));
+  },
 
-        // Create a user
-        async createUser(req, res) {
-            try {
-                const user = await User.create(req.body);
-                res.json(user);
-            } catch (err) {
-                res.status(500).json(err);
-            }
-            },
+  // Delete a user
+  deleteUser(req, res) {
+    User.findOneAndDelete({ _id: req.params.userId })
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'No user with that ID' });
+        }
+        return Thought.deleteMany({ _id: { $in: user.thoughts } });
+      })
+      .then(() => res.json({ message: 'User and associated thoughts deleted!' }))
+      .catch((err) => res.status(500).json(err));
+  },
 
-            // Update a user
-        async updateUser(req, res) {
-            try {
-                const user = await User.findOneAndUpdate(
-                    { _id: req.params.userId },
-                    { $set: req.body },
-                    { runValidators: true, new: true }
-                );
+  // Add friend
+  addFriend(req, res) {
+    User.findOneAndUpdate(
+      { _id: req.params.userId },
+      { $addToSet: { friends: req.params.friendId } },
+      { new: true }
+    )
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'No user with this id!' });
+        }
+        res.json(user);
+      })
+      .catch((err) => res.status(500).json(err));
+  },
 
-                if (!user) {
-                    return res.status(404).json({ message: 'No user with this id!' });
-                }
-                res.json(user);
-            } catch (err) {
-                res.status(500).json(err);
-            }
-        },
+  // Remove friend
+  removeFriend(req, res) {
+    User.findOneAndUpdate(
+      { _id: req.params.userId },
+      { $pull: { friends: req.params.friendId } },
+      { new: true }
+    )
+      .then((user) => {
+        if (!user) {
+          return res.status(404).json({ message: 'No user with this id!' });
+        }
+        res.json(user);
+      })
+      .catch((err) => res.status(500).json(err));
+  }
+};
 
-        // Delete a user and associated thoughts
-        async deleteUser(req, res) {
-            try {
-                const user = await User.findOneAndDelete({ _id: req.params.userId });
-                if (!user) {
-                    return res.status(404).json({ message: 'No user with that ID'});
-                }
-
-                //Bonus: Remove user's thoughts
-                await Thought.deleteMany({ _id: { $in: user.thoughts } });
-                res.json({ message: 'User and associated thoughts deleted!' });
-            } catch (err) {
-                res.status(500).json(err);
-            }
-            }
-        
-            // Add friend
-            async addFriend(req, res) {
-                try {
-                    const user = await User.findOneAndUpdate(
-                        { _id: req.params.userId },
-                        { $addToSet: { friends: req.params.friendId } },
-                        { new: true }
-                );
-
-                if (!user) {
-                    return res.status(404).json({ message: 'No user with this id!' });
-                }
-                res.json(user);
-            } catch (err) {
-                res.status(500).json(err);
-            }
-            },
-
-            //Remove friend
-            async removeFriend(req, res) {
-                try {
-                    const user = await User.findOneAndUpdate(
-                        { _id: req.params.userId },
-                        { $pull: { friends: req.params.friendId } },
-                        { new: true }
-                    );
-
-                    if (!user) {
-                        return res.status(404).json({ message: 'No user with this id!' });
-                    }
-                    res.json(user);
-                } catch (err) {
-                    res.status(500).json(err);
-                }
-                }
-                module.exports = userController;
-        
-    
+module.exports = userController;

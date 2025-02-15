@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //Use routes
-app.use('/api', routes);
+app.use(routes);
 
 // Start server after db connection
 db.once('open', () => {

@@ -27,19 +27,19 @@ const userSchema = new Schema(
             }
         ]
     },
-{
-    toJSON: {
-        virtuals: true
-    },
-    id: false
-}
+    {
+        toJSON: {
+            virtuals: true
+        },
+        id: false
+    }
 );
 
 //Create virtual property 'friendCount'
-userSchema.virtual('friendCount').get(function() {
+userSchema.virtual('friendCount').get(function () {
     return this.friends.length;
 });
 
 //Create and export User model
 const User = model('User', userSchema);
-module.exports - User;
+module.exports = User;
